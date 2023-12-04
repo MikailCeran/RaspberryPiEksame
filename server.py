@@ -1,62 +1,55 @@
 import socket
 import json
-import threading
+from flask import Flask, request, jsonify
 
-#funktion til at behandle klientforbindelser
-def handle_client(client_socket):
-    request = client_socket.recv(1024).decode()
-    try:
-        request_data = json.loads(request)
-        response_data = process_request(request_data)
-        response = json.dumps(response_data)
-        client_socket.send(response.encode())
-    except json.JSONDecodeError:
-        response = json.dumps({"error": "Invalid JSON format"})
-        client_socket.send(response.encode())
-    client_socket.close()
+app = Flask(__name__)
 
-#funktion til at behandle klientanmodninger
-def process_request(request_data):
-    if "method" not in request_data:
-        return {"error": "Method not specified"}
+recorded_data = []
 
-    method = request_data["method"]
+@app.route('/record', methods=['POST'])
+def record_data():
+    data = request.get_json()
+    decibel_data = data.get('decibel_data')
 
-    if method == "Random":
-        if "Tal1" not in request_data or "Tal2" not in request_data:
-            return {"error": "Invalid parameters"}
-        tal1 = request_data["Tal1"]
-        tal2 = request_data["Tal2"]
-        import random
-        result = random.randint(tal1, tal2)
-        return {"result": result}
-    elif method == "Add":
-        if "Tal1" not in request_data or "Tal2" not in request_data:
-            return {"error": "Invalid parameters"}
-        tal1 = request_data["Tal1"]
-        tal2 = request_data["Tal2"]
-        result = tal1 + tal2
-        return {"result": result}
-    elif method == "Subtract":
-        if "Tal1" not in request_data or "Tal2" not in request_data:
-            return {"error": "Invalid parameters"}
-        tal1 = request_data["Tal1"]
-        tal2 = request_data["Tal2"]
-        result = tal1 - tal2
-        return {"result": result}
-    else:
-        return {"error": "Unknown method"}
+    # Store decibel data (this is a simplified example)
+    recorded_data.append(decibel_data)
 
-#opretter en socket til at lytte efter klientforbindelser
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(('0.0.0.0', 8080))
-server.listen(5)
+    return jsonify({'status': 'success'})
 
-print("Serveren lytter på port 8080...")
+@app.route('/get_data', methods=['GET'])
+def get_data():
+    return jsonify({'recorded_data': recorded_data})
 
-#accepterer klientforbindelser og opret tråd til hver klient
-while True:
-    client_sock, addr = server.accept()
-    print(f"Accepteret forbindelse fra {addr[0]}:{addr[1]}")
-    client_handler = threading.Thread(target=handle_client, args=(client_sock,))
-    client_handler.start()
+def start_socket_listener():
+    # Start a separate thread or process to listen for socket data
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind(('0.0.0.0', 9090))  # Use a different port for the socket
+    server_socket.listen(1)
+
+    print("Socket listener started on port 9090")
+
+    while True:
+        client_socket, addr = server_socket.accept()
+        print(f"Accepted connection from {addr}")
+        
+        # Receive and process socket data
+        data = client_socket.recv(1024)
+        try:
+            json_data = json.loads(data.decode())
+            decibel_data = json_data.get('decibel_data')
+            recorded_data.append(decibel_data)
+            print(f"Received data from socket: {decibel_data}")
+            client_socket.send(b"Data received successfully")
+        except json.JSONDecodeError:
+            print("Invalid JSON format received")
+
+        client_socket.close()
+
+if __name__ == '__main__':
+    # Use '0.0.0.0' to listen on all public IPs
+    app.run(host='0.0.0.0', port=8080, threaded=True)
+
+    # Start the socket listener in a separate thread
+    import threading
+    socket_thread = threading.Thread(target=start_socket_listener)
+    socket_thread.start()

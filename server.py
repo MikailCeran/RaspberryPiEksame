@@ -1,6 +1,9 @@
 import socket
 import json
+import time
+import pyaudio
 from flask import Flask, request, jsonify
+from threading import Thread
 
 app = Flask(__name__)
 
@@ -21,35 +24,72 @@ def get_data():
     return jsonify({'recorded_data': recorded_data})
 
 def start_socket_listener():
-    # Start a separate thread or process to listen for socket data
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Start a separate thread to listen for socket data
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_socket.bind(('0.0.0.0', 9090))  # Use a different port for the socket
-    server_socket.listen(1)
 
     print("Socket listener started on port 9090")
 
     while True:
-        client_socket, addr = server_socket.accept()
-        print(f"Accepted connection from {addr}")
-        
         # Receive and process socket data
-        data = client_socket.recv(1024)
+        data, addr = server_socket.recvfrom(1024)
         try:
             json_data = json.loads(data.decode())
             decibel_data = json_data.get('decibel_data')
             recorded_data.append(decibel_data)
-            print(f"Received data from socket: {decibel_data}")
-            client_socket.send(b"Data received successfully")
+            print(f"Received data from {addr}: {decibel_data}")
+            # Optionally, you can send a response back to the client if needed.
+            # server_socket.sendto(b"Data received successfully", addr)
         except json.JSONDecodeError:
             print("Invalid JSON format received")
 
-        client_socket.close()
+def send_audio_data():
+    # Function to send audio data every 10 seconds
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    server_address = ('127.0.0.1', 9090)  # Change this to the server's IP and port
+
+    # Set up PyAudio
+    p = pyaudio.PyAudio()
+    chunk_size = 1024
+    sample_format = pyaudio.paInt16
+    channels = 1
+    fs = 44100
+
+    stream = p.open(format=sample_format,
+                    channels=channels,
+                    rate=fs,
+                    frames_per_buffer=chunk_size,
+                    input=True)
+
+    while True:
+        # Read audio data from the microphone
+        data = stream.read(chunk_size)
+        audio_data = {'audio_data': data}
+
+        # Convert the data to JSON format
+        json_data = json.dumps(audio_data).encode()
+
+        # Send the data to the server
+        client_socket.sendto(json_data, server_address)
+
+        print("Sent audio data")
+
+        time.sleep(10)
+
+    # Stop and close the PyAudio stream
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
 
 if __name__ == '__main__':
     # Use '0.0.0.0' to listen on all public IPs
-    app.run(host='0.0.0.0', port=8080, threaded=True)
+    app_thread = Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': 8080, 'threaded': True})
+    app_thread.start()
 
     # Start the socket listener in a separate thread
-    import threading
-    socket_thread = threading.Thread(target=start_socket_listener)
+    socket_thread = Thread(target=start_socket_listener)
     socket_thread.start()
+
+    # Start the function to send audio data in a separate thread
+    audio_thread = Thread(target=send_audio_data)
+    audio_thread.start()

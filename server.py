@@ -93,3 +93,4 @@ if __name__ == '__main__':
     # Start the function to send audio data in a separate thread
     audio_thread = Thread(target=send_audio_data)
     audio_thread.start()
+    #T

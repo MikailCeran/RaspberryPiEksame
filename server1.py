@@ -36,11 +36,9 @@ def start_socket_listener():
         data, addr = server_socket.recvfrom(1024)
         try:
             json_data = json.loads(data.decode())
-            decibel_data = json_data.get('audio_data')
-
-            # Optionally, you can process the audio data here
+            audio_data = json_data.get('audio_data')
+            recorded_data.append(audio_data)
             print(f"Received audio data from {addr}")
-
         except json.JSONDecodeError:
             print("Invalid JSON format received")
 

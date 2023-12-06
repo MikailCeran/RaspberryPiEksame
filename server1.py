@@ -1,7 +1,7 @@
 import socket
 import json
 import time
-import base64  # Add this import
+import base64
 import pyaudio
 from flask import Flask, request, jsonify
 from threading import Thread
@@ -36,11 +36,11 @@ def start_socket_listener():
         data, addr = server_socket.recvfrom(1024)
         try:
             json_data = json.loads(data.decode())
-            decibel_data = json_data.get('decibel_data')
-            recorded_data.append(decibel_data)
-            print(f"Received data from {addr}: {decibel_data}")
-            # Optionally, you can send a response back to the client if needed.
-            # server_socket.sendto(b"Data received successfully", addr)
+            decibel_data = json_data.get('audio_data')
+
+            # Optionally, you can process the audio data here
+            print(f"Received audio data from {addr}")
+
         except json.JSONDecodeError:
             print("Invalid JSON format received")
 

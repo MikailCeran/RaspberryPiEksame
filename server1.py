@@ -3,6 +3,7 @@ import json
 import time
 import base64
 import pyaudio
+from flask import Flask, request, jsonify  # Import Flask here
 from threading import Thread
 
 app = Flask(__name__)

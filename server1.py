@@ -3,9 +3,9 @@ import json
 import time
 import base64
 import pyaudio
+import sounddevice as sd
 from flask import Flask, jsonify
 from threading import Thread
-from soundmeter import Meter
 
 app = Flask(__name__)
 
@@ -29,7 +29,7 @@ def check_data_file_size():
 
 @app.route('/record', methods=['POST'])
 def record_data():
-    # Use soundmeter to capture decibel data
+    # Use sounddevice to capture audio data
     decibel_data = capture_decibels()
 
     # Store decibel data
@@ -48,9 +48,10 @@ def get_data():
     return jsonify({'recorded_data': recorded_data})
 
 def capture_decibels():
-    # Use soundmeter to capture decibel data
-    meter = Meter(device='default', dBA=True, stream=True)
-    decibel_data = meter.get()
+    # Use sounddevice to capture audio data
+    audio_data, _ = sd.read(samplerate=44100, channels=1, dtype='int16', duration=1)
+    rms = numpy.sqrt(numpy.mean(audio_data**2))
+    decibel_data = 20 * numpy.log10(rms)
 
     return decibel_data
 
@@ -60,7 +61,7 @@ def send_data():
     server_address = ('192.168.50.236', 9090)  # Replace with the IP address of the machine running the listener
 
     while True:
-        # Use soundmeter to capture decibel data
+        # Use sounddevice to capture audio data
         decibel_data = capture_decibels()
 
         # Convert the data to JSON format

@@ -2,10 +2,11 @@ import socket
 import json
 import time
 import base64
-import pyaudio
 import sounddevice as sd
 from flask import Flask, jsonify
 from threading import Thread
+import os
+import numpy
 
 app = Flask(__name__)
 

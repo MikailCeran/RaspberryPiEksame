@@ -3,9 +3,9 @@ import json
 import time
 import base64
 import pyaudio
-from soundmeter import Meter
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 from threading import Thread
+from soundmeter import Meter
 
 app = Flask(__name__)
 
@@ -29,10 +29,10 @@ def check_data_file_size():
 
 @app.route('/record', methods=['POST'])
 def record_data():
-    data = request.get_json()
-    decibel_data = data.get('decibel_data')
+    # Use soundmeter to capture decibel data
+    decibel_data = capture_decibels()
 
-    # Store decibel data (this is a simplified example)
+    # Store decibel data
     recorded_data.append(decibel_data)
     save_data_to_file({'decibel_data': decibel_data})
 
@@ -47,26 +47,30 @@ def record_data():
 def get_data():
     return jsonify({'recorded_data': recorded_data})
 
-def send_audio_data():
+def capture_decibels():
+    # Use soundmeter to capture decibel data
+    meter = Meter(device='default', dBA=True, stream=True)
+    decibel_data = meter.get()
+
+    return decibel_data
+
+def send_data():
     # Function to send decibel data every 10 seconds
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_address = ('192.168.50.236', 9090)  # Replace with the IP address of the machine running the listener
 
-    # Set up the sound meter
-    meter = Meter()
-
     while True:
-        # Measure the decibel level
-        decibel_level = meter.get_db()
-        audio_data = {'decibel_data': decibel_level}
+        # Use soundmeter to capture decibel data
+        decibel_data = capture_decibels()
 
         # Convert the data to JSON format
-        json_data = json.dumps(audio_data).encode()
+        data = {'decibel_data': decibel_data}
+        json_data = json.dumps(data).encode()
 
         # Send the data to the server
         client_socket.sendto(json_data, server_address)
 
-        print(f"Sent decibel data: {decibel_level} dB")
+        print("Sent decibel data")
 
         time.sleep(10)
 
@@ -76,5 +80,5 @@ if __name__ == '__main__':
     app_thread.start()
 
     # Start the function to send decibel data in a separate thread
-    audio_thread = Thread(target=send_audio_data)
-    audio_thread.start()
+    data_thread = Thread(target=send_data)
+    data_thread.start()

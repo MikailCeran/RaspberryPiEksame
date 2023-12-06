@@ -31,17 +31,22 @@ def start_socket_listener():
 
     print("Socket listener started on port 9090")
 
+    buffer_size = 4096  # Adjust the buffer size as needed
+    accumulated_data = b""  # Buffer to accumulate received data
+
     while True:
         # Receive and process socket data
         data, addr = server_socket.recvfrom(1024)
-        try:
-            raw_data = data.decode()
-            print(f"Raw data received from {addr}: {raw_data}")
+        accumulated_data += data
 
-            json_data = json.loads(raw_data)
+        try:
+            json_data = json.loads(accumulated_data.decode())
             audio_data = json_data.get('audio_data')
             recorded_data.append(audio_data)
             print(f"Received audio data from {addr}")
+            
+            # Clear the buffer after successfully processing data
+            accumulated_data = b""
         except json.JSONDecodeError:
             print("Invalid JSON format received")
 

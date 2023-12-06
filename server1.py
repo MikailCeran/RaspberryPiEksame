@@ -35,7 +35,10 @@ def start_socket_listener():
         # Receive and process socket data
         data, addr = server_socket.recvfrom(1024)
         try:
-            json_data = json.loads(data.decode())
+            raw_data = data.decode()
+            print(f"Raw data received from {addr}: {raw_data}")
+
+            json_data = json.loads(raw_data)
             audio_data = json_data.get('audio_data')
             recorded_data.append(audio_data)
             print(f"Received audio data from {addr}")

@@ -3,7 +3,7 @@ import json
 import time
 import base64
 import sounddevice as sd
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from threading import Thread
 import os
 import numpy
@@ -75,6 +75,11 @@ def send_data():
         print("Sent decibel data")
 
         time.sleep(10)
+
+@app.route('/mic_data', methods=['GET'])
+def mic_data():
+    decibel_data = capture_decibels()
+    return jsonify({'mic_data': decibel_data})
 
 if __name__ == '__main__':
     # Use '0.0.0.0' to listen on all public IPs

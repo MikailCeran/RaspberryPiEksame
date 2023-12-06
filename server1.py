@@ -49,6 +49,10 @@ def send_audio_data():
         # Convert the data to base64-encoded string
         audio_data = {'audio_data': base64.b64encode(data).decode()}
 
+        # Write audio data to a file
+        with open('audio_data.txt', 'a') as file:
+            file.write(audio_data['audio_data'] + '\n')
+
         # Convert the data to JSON format
         json_data = json.dumps(audio_data).encode()
 

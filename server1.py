@@ -3,7 +3,7 @@ import json
 import time
 import base64
 import pyaudio
-from flask import Flask, request, jsonify  # Import Flask here
+from flask import Flask, request, jsonify
 from threading import Thread
 
 app = Flask(__name__)
@@ -24,44 +24,10 @@ def record_data():
 def get_data():
     return jsonify({'recorded_data': recorded_data})
 
-def start_socket_listener():
-    # Start a separate thread to listen for socket data
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    server_socket.bind(('0.0.0.0', 9090))  # Use a different port for the socket
-
-    print("Socket listener started on port 9090")
-
-    buffer_size = 4096  # Adjust the buffer size as needed
-    accumulated_data = b""  # Buffer to accumulate received data
-
-    while True:
-        # Receive and process socket data
-        data, addr = server_socket.recvfrom(1024)
-        accumulated_data += data
-
-        try:
-            json_data = json.loads(accumulated_data.decode())
-            audio_data = json_data.get('audio_data')
-            recorded_data.append(audio_data)
-            print(f"Received audio data from {addr}")
-
-            # Clear the buffer after successfully processing data
-            accumulated_data = b""
-        except json.JSONDecodeError:
-            print("Invalid JSON format received")
-            print(f"Accumulated data: {accumulated_data}")
-
-            # Optionally, you can print the length of accumulated data
-            print(f"Accumulated data length: {len(accumulated_data)}")
-
-            # Clear the buffer to avoid further attempts with invalid data
-            accumulated_data = b""
-
-
 def send_audio_data():
     # Function to send audio data every 10 seconds
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    server_address = ('127.0.0.1', 9090)  # Change this to the server's IP and port
+    server_address = ('192.168.50.236', 9090)  # Replace with the IP address of the machine running the listener
 
     # Set up PyAudio
     p = pyaudio.PyAudio()
@@ -102,10 +68,6 @@ if __name__ == '__main__':
     # Use '0.0.0.0' to listen on all public IPs
     app_thread = Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': 8080, 'threaded': True})
     app_thread.start()
-
-    # Start the socket listener in a separate thread
-    socket_thread = Thread(target=start_socket_listener)
-    socket_thread.start()
 
     # Start the function to send audio data in a separate thread
     audio_thread = Thread(target=send_audio_data)

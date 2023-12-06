@@ -3,7 +3,6 @@ import json
 import time
 import base64
 import pyaudio
-from flask import Flask, request, jsonify
 from threading import Thread
 
 app = Flask(__name__)
@@ -44,11 +43,19 @@ def start_socket_listener():
             audio_data = json_data.get('audio_data')
             recorded_data.append(audio_data)
             print(f"Received audio data from {addr}")
-            
+
             # Clear the buffer after successfully processing data
             accumulated_data = b""
         except json.JSONDecodeError:
             print("Invalid JSON format received")
+            print(f"Accumulated data: {accumulated_data}")
+
+            # Optionally, you can print the length of accumulated data
+            print(f"Accumulated data length: {len(accumulated_data)}")
+
+            # Clear the buffer to avoid further attempts with invalid data
+            accumulated_data = b""
+
 
 def send_audio_data():
     # Function to send audio data every 10 seconds

@@ -17,16 +17,19 @@
             try {
                 const response = await fetch('http://192.168.50.236:8080/get_decibels');
                 const data = await response.json();
-
+    
+                console.log("Received data:", data);
+    
                 if (data.error) {
                     console.error(data.error);
                 } else {
-                    console.log("Received data:", data);
                     const decibelDataElement = document.getElementById('decibelData');
-                    
-                    // Check if "decibels" is a number
-                    if (typeof data.decibels === 'number') {
-                        decibelDataElement.textContent = data.decibels.toFixed(2);
+    
+                    // Convert the 'decibels' field to a number
+                    const decibelsValue = parseFloat(data.decibels);
+    
+                    if (!isNaN(decibelsValue)) {
+                        decibelDataElement.textContent = decibelsValue.toFixed(2);
                     } else {
                         console.error("Invalid decibel value:", data.decibels);
                     }
@@ -35,14 +38,10 @@
                 console.error(error);
             }
         }
-
-        async function getCapturedAudio() {
-            try {
-                window.location.href = 'https://192.168.50.236:8080/captured_audio';
-            } catch (error) {
-                console.error(error);
-            }
-        }
     </script>
+    
+    
+    
+    
 </body>
 </html>

@@ -1,12 +1,11 @@
 import socket
 import json
 import time
-import base64
 import sounddevice as sd
-from flask import Flask, jsonify, request
+import numpy
+from flask import Flask, jsonify
 from threading import Thread
 import os
-import numpy
 
 app = Flask(__name__)
 
@@ -50,7 +49,8 @@ def get_data():
 
 def capture_decibels():
     # Use sounddevice to capture audio data
-    audio_data, _ = sd.read(samplerate=44100, channels=1, dtype='int16', duration=1)
+    audio_data = sd.rec(int(44100), channels=1, dtype='int16')
+    sd.wait()
     rms = numpy.sqrt(numpy.mean(audio_data**2))
     decibel_data = 20 * numpy.log10(rms)
 
@@ -75,11 +75,6 @@ def send_data():
         print("Sent decibel data")
 
         time.sleep(10)
-
-@app.route('/mic_data', methods=['GET'])
-def mic_data():
-    decibel_data = capture_decibels()
-    return jsonify({'mic_data': decibel_data})
 
 if __name__ == '__main__':
     # Use '0.0.0.0' to listen on all public IPs

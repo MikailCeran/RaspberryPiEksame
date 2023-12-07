@@ -7,13 +7,25 @@
 </head>
 <body>
     <h1>Sound Data Dashboard</h1>
-    <button onclick="getDecibels()">Capture Decibels</button>
-    <p id="decibel-data"></p>
+    <div>
+        <button onclick="getDecibels()">Capture Decibels</button>
+        <p>Decibel Data: <span id="decibelData"></span></p>
+    </div>
     <script>
         async function getDecibels() {
-            const response = await fetch('http://192.168.50.236:8080/get_decibels');
-            const data = await response.json();
-            document.getElementById('decibel-data').innerText = `Decibel Data: ${data.decibel_data} dB`;
+            try {
+                const response = await fetch('http://192.168.50.236:8080/get_decibels');
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error(data.error);
+                } else {
+                    const decibelDataElement = document.getElementById('decibelData');
+                    decibelDataElement.textContent = data.decibel_data;
+                }
+            } catch (error) {
+                console.error(error);
+            }
         }
     </script>
 </body>

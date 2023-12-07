@@ -1,21 +1,20 @@
 import numpy
 import sounddevice as sd
 from flask import Flask, jsonify
-import time
+from flask_cors import CORS  # Import the CORS module
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 def capture_decibels():
-    duration = 1
+    duration = 1  # seconds
     samplerate = 44100
 
-    # Capture audio
     audio_data, _ = sd.read(samplerate=samplerate, channels=1, dtype='int16', duration=duration)
-
-    # Calculate decibels
     rms = numpy.sqrt(numpy.mean(audio_data**2))
     decibel_data = 20 * numpy.log10(rms)
 
+    print(f"Decibel data: {decibel_data} dB")
     return decibel_data
 
 @app.route('/get_decibels', methods=['GET'])

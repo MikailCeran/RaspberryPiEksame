@@ -3,19 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sound Decibel Dashboard</title>
+    <title>Sound Data Dashboard</title>
 </head>
 <body>
-    <h1>Sound Decibel Dashboard</h1>
-    <p id="decibel-data">Decibel Data: Loading...</p>
+    <h1>Sound Data Dashboard</h1>
     <button onclick="getDecibels()">Capture Decibels</button>
-
+    <p id="decibel-data"></p>
     <script>
         async function getDecibels() {
             const response = await fetch('http://192.168.50.236:8080/get_decibels');
             const data = await response.json();
-            const decibelDataElement = document.getElementById('decibel-data');
-            decibelDataElement.textContent = `Decibel Data: ${parseFloat(data.decibel_data).toFixed(2)} dB`;
+            document.getElementById('decibel-data').innerText = `Decibel Data: ${data.decibel_data} dB`;
         }
     </script>
 </body>

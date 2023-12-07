@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sound Data Dashboard</title>
+</head>
+<body>
+    <h1>Sound Data Dashboard</h1>
+    <ul id="sound-data-list"></ul>
+    <script>
+        // Fetch sound data from the server
+        async function fetchSoundData() {
+            const response = await fetch('/get_data');
+            const data = await response.json();
+            return data.recorded_data;
+        }
+
+        // Update the dashboard with sound data
+        async function updateDashboard() {
+            const soundDataList = document.getElementById('sound-data-list');
+            soundDataList.innerHTML = '';
+
+            const soundData = await fetchSoundData();
+
+            soundData.forEach(entry => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `Decibel Data: ${entry.decibel_data}`;
+                soundDataList.appendChild(listItem);
+            });
+
+            setTimeout(updateDashboard, 10000); // Update every 10 seconds
+        }
+
+        // Initial update
+        updateDashboard();
+    </script>
+</body>
+</html>

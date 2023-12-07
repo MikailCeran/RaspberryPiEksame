@@ -1,5 +1,6 @@
 import socket
 import json
+import pyaudio
 import time
 import base64
 import sounddevice as sd
@@ -52,13 +53,33 @@ def get_data():
 def home():
     return render_template('dashboard.html')
 
+import numpy as np
+
 def capture_decibels():
-    # Use sounddevice to capture audio data
-    audio_data, _ = sd.read(samplerate=44100, channels=1, dtype='int16', duration=1)
-    rms = numpy.sqrt(numpy.mean(audio_data**2))
-    decibel_data = 20 * numpy.log10(rms)
+    # Use PyAudio to capture audio data
+    chunk_size = 1024
+    sample_format = np.int16
+    channels = 1
+    fs = 44100
+
+    p = pyaudio.PyAudio()
+
+    stream = p.open(format=sample_format,
+                    channels=channels,
+                    rate=fs,
+                    frames_per_buffer=chunk_size,
+                    input=True)
+
+    audio_data = np.frombuffer(stream.read(chunk_size), dtype=np.int16)
+    rms = np.sqrt(np.mean(audio_data**2))
+    decibel_data = 20 * np.log10(rms)
+
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
 
     return decibel_data
+
 
 def send_data():
     # Function to send decibel data every 10 seconds

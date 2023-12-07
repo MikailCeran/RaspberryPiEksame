@@ -1,12 +1,9 @@
 import socket
 import json
-import pyaudio
 import time
 import base64
-import sounddevice as sd
-from flask import Flask, jsonify, render_template
-import os
-import numpy
+import pyaudio
+from flask import Flask, request, jsonify
 from threading import Thread
 
 app = Flask(__name__)
@@ -31,7 +28,7 @@ def check_data_file_size():
 
 @app.route('/record', methods=['POST'])
 def record_data():
-    # Use sounddevice to capture audio data
+    # Use PyAudio to capture audio data
     decibel_data = capture_decibels()
 
     # Store decibel data
@@ -49,20 +46,13 @@ def record_data():
 def get_data():
     return jsonify({'recorded_data': recorded_data})
 
-@app.route('/')
-def home():
-    return render_template('dashboard.html')
-
-import numpy as np
-
 def capture_decibels():
     # Use PyAudio to capture audio data
+    p = pyaudio.PyAudio()
     chunk_size = 1024
-    sample_format = np.int16
+    sample_format = pyaudio.paInt16
     channels = 1
     fs = 44100
-
-    p = pyaudio.PyAudio()
 
     stream = p.open(format=sample_format,
                     channels=channels,
@@ -70,34 +60,33 @@ def capture_decibels():
                     frames_per_buffer=chunk_size,
                     input=True)
 
-    audio_data = np.frombuffer(stream.read(chunk_size), dtype=np.int16)
-    rms = np.sqrt(np.mean(audio_data**2))
-    decibel_data = 20 * np.log10(rms)
+    # Read audio data from the microphone
+    data = stream.read(chunk_size)
 
+    # Stop and close the PyAudio stream
     stream.stop_stream()
     stream.close()
     p.terminate()
 
-    return decibel_data
+    # Convert the data to base64-encoded string
+    audio_data = {'audio_data': base64.b64encode(data).decode()}
 
+    # Convert the data to JSON format
+    json_data = json.dumps(audio_data).encode()
 
-def send_data():
-    # Function to send decibel data every 10 seconds
+    return json_data
+
+def send_audio_data():
+    # Function to send audio data every 10 seconds
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_address = ('192.168.50.236', 9090)  # Replace with the IP address of the machine running the listener
 
     while True:
-        # Use sounddevice to capture audio data
-        decibel_data = capture_decibels()
+        # Capture and send audio data
+        audio_data = capture_decibels()
+        client_socket.sendto(audio_data, server_address)
 
-        # Convert the data to JSON format
-        data = {'decibel_data': decibel_data}
-        json_data = json.dumps(data).encode()
-
-        # Send the data to the server
-        client_socket.sendto(json_data, server_address)
-
-        print("Sent decibel data")
+        print("Sent audio data")
 
         time.sleep(10)
 
@@ -106,6 +95,6 @@ if __name__ == '__main__':
     app_thread = Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': 8080, 'threaded': True})
     app_thread.start()
 
-    # Start the function to send decibel data in a separate thread
-    data_thread = Thread(target=send_data)
-    data_thread.start()
+    # Start the function to send audio data in a separate thread
+    audio_thread = Thread(target=send_audio_data)
+    audio_thread.start()

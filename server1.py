@@ -1,30 +1,39 @@
 import numpy as np
-import soundfile as sf
 from flask import Flask, jsonify
-from flask_cors import CORS  # Import CORS from flask_cors
+from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes of the Flask app
+CORS(app)
 
 def calculate_decibels(audio_data):
-    # Your decibel calculation logic here
-    # This is a basic example using the mean of the absolute values
-    decibels = 20 * np.log10(np.mean(np.abs(audio_data)))
-    return decibels
+    try:
+        # Your decibel calculation logic here
+        # This example assumes the audio data is in the range [-1, 1]
+        decibels = 20 * np.log10(np.max(np.abs(audio_data)))
+        return decibels
+    except Exception as e:
+        return {"error": str(e)}
 
 def capture_audio():
-    duration = 1  # seconds
-    samplerate = 44100
+    try:
+        duration = 1  # seconds
+        samplerate = 44100
 
-    audio_data = np.random.random(samplerate * duration)  # Replace this with your actual audio capture logic
+        # Generate random audio data in the range [-1, 1]
+        audio_data = 2 * np.random.random(samplerate * duration) - 1
 
-    return audio_data
+        return audio_data
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.route('/get_decibels', methods=['GET'])
 def get_decibels():
-    audio_data = capture_audio()
-    decibels = calculate_decibels(audio_data)
-    return jsonify({"decibels": decibels})
+    try:
+        audio_data = capture_audio()
+        decibels = calculate_decibels(audio_data)
+        return jsonify({"decibels": decibels})
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, threaded=True)

@@ -1,8 +1,10 @@
 import soundfile as sf
 import sounddevice as sd
 from flask import Flask, jsonify
+from flask_cors import CORS  # Import the CORS extension
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 def capture_audio():
     duration = 1  # seconds

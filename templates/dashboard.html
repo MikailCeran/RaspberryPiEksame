@@ -23,7 +23,13 @@
                 } else {
                     console.log("Received data:", data);
                     const decibelDataElement = document.getElementById('decibelData');
-                    decibelDataElement.textContent = data.decibels.toFixed(2);
+                    
+                    // Check if "decibels" is a number
+                    if (typeof data.decibels === 'number') {
+                        decibelDataElement.textContent = data.decibels.toFixed(2);
+                    } else {
+                        console.error("Invalid decibel value:", data.decibels);
+                    }
                 }
             } catch (error) {
                 console.error(error);
@@ -32,7 +38,7 @@
 
         async function getCapturedAudio() {
             try {
-                window.location.href = 'http://192.168.50.236:8080/captured_audio';
+                window.location.href = 'https://192.168.50.236:8080/captured_audio';
             } catch (error) {
                 console.error(error);
             }

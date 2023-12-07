@@ -47,7 +47,7 @@ def get_decibels():
     try:
         audio_data = capture_audio()
         decibels = calculate_decibels(audio_data)
-        return jsonify({"decibels": decibels})
+        return jsonify({"decibels": decibels["decibels"]})
     except Exception as e:
         return jsonify({"error": str(e)})
 

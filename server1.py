@@ -1,32 +1,28 @@
+import numpy as np
 import soundfile as sf
-import sounddevice as sd
 from flask import Flask, jsonify
-from flask_cors import CORS  # Import CORS from flask_cors
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+
+def calculate_decibels(audio_data):
+    # Your decibel calculation logic here
+    # This is a basic example using the mean of the absolute values
+    decibels = 20 * np.log10(np.mean(np.abs(audio_data)))
+    return decibels
 
 def capture_audio():
     duration = 1  # seconds
     samplerate = 44100
-    filename = 'captured_audio.wav'
 
-    audio_data = sd.rec(int(samplerate * duration), samplerate=samplerate, channels=1, dtype='int16')
-    sd.wait()
+    audio_data = np.random.random(samplerate * duration)  # Replace this with your actual audio capture logic
 
-    sf.write(filename, audio_data, samplerate)
-    print(f"Audio captured and saved to {filename}")
-    return filename
-
-@app.route('/get_audio', methods=['GET'])
-def get_audio():
-    filename = capture_audio()
-    return jsonify({"audio_file": filename})
+    return audio_data
 
 @app.route('/get_decibels', methods=['GET'])
 def get_decibels():
-    # Your code for calculating decibels goes here
-    return jsonify({"decibels": 85})  # Replace 85 with your actual decibel value
+    audio_data = capture_audio()
+    decibels = calculate_decibels(audio_data)
+    return jsonify({"decibels": decibels})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, threaded=True)

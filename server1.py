@@ -1,8 +1,10 @@
 import numpy as np
 import soundfile as sf
 from flask import Flask, jsonify
+from flask_cors import CORS  # Import CORS from flask_cors
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes of the Flask app
 
 def calculate_decibels(audio_data):
     # Your decibel calculation logic here

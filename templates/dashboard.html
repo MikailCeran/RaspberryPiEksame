@@ -21,7 +21,7 @@
                     console.error(data.error);
                 } else {
                     const decibelDataElement = document.getElementById('decibelData');
-                    decibelDataElement.textContent = data.decibel_data;
+                    decibelDataElement.textContent = data.decibels; // Corrected key name
                 }
             } catch (error) {
                 console.error(error);

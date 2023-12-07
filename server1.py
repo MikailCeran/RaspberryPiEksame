@@ -8,8 +8,11 @@ CORS(app)
 def calculate_decibels(audio_data):
     try:
         # Your decibel calculation logic here
-        # This example assumes the audio data is in the range [-1, 1]
-        decibels = 20 * np.log10(np.max(np.abs(audio_data)))
+        # Assuming audio_data represents the intensities of two sounds (S1 and S2)
+        S1, S2 = audio_data[:len(audio_data)//2], audio_data[len(audio_data)//2:]
+        
+        # Calculate decibels
+        decibels = 10 * np.log10(np.mean(S1) / np.mean(S2))
         return decibels
     except Exception as e:
         return {"error": str(e)}
@@ -19,8 +22,12 @@ def capture_audio():
         duration = 1  # seconds
         samplerate = 44100
 
-        # Generate random audio data in the range [-1, 1]
-        audio_data = 2 * np.random.random(samplerate * duration) - 1
+        # Generate random audio data for two sounds (S1 and S2)
+        S1 = 2 * np.random.random(samplerate * duration) - 1
+        S2 = 2 * np.random.random(samplerate * duration) - 1
+
+        # Concatenate S1 and S2 to represent intensities of two sounds
+        audio_data = np.concatenate([S1, S2])
 
         return audio_data
     except Exception as e:

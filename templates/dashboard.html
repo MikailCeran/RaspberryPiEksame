@@ -10,6 +10,7 @@
     <div>
         <button onclick="getDecibels()">Capture Decibels</button>
         <p>Decibel Data: <span id="decibelData"></span> dB</p>
+        <button onclick="getCapturedAudio()">Download Captured Audio</button>
     </div>
     <script>
         async function getDecibels() {
@@ -24,6 +25,14 @@
                     const decibelDataElement = document.getElementById('decibelData');
                     decibelDataElement.textContent = data.decibels.toFixed(2);
                 }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function getCapturedAudio() {
+            try {
+                window.location.href = 'http://192.168.50.236:8080/captured_audio';
             } catch (error) {
                 console.error(error);
             }

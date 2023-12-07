@@ -1,6 +1,7 @@
 import numpy as np
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_file
 from flask_cors import CORS
+import scipy.io.wavfile as wav
 
 app = Flask(__name__)
 CORS(app)
@@ -34,6 +35,9 @@ def capture_audio():
         # Concatenate S1 and S2 to represent intensities of two sounds
         audio_data = np.concatenate([S1, S2])
 
+        # Save the audio data to a WAV file
+        wav.write('captured_audio.wav', samplerate, audio_data.astype(np.int16))
+
         return audio_data
     except Exception as e:
         return {"error": str(e)}
@@ -44,6 +48,13 @@ def get_decibels():
         audio_data = capture_audio()
         decibels = calculate_decibels(audio_data)
         return jsonify({"decibels": decibels})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+@app.route('/captured_audio', methods=['GET'])
+def get_captured_audio():
+    try:
+        return send_file('captured_audio.wav', as_attachment=True)
     except Exception as e:
         return jsonify({"error": str(e)})
 

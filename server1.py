@@ -1,11 +1,12 @@
 import socket
 import json
 import time
+import base64
 import sounddevice as sd
-import numpy
-from flask import Flask, jsonify
+from flask import Flask, render_template, jsonify
 from threading import Thread
 import os
+import numpy
 
 app = Flask(__name__)
 
@@ -47,10 +48,13 @@ def record_data():
 def get_data():
     return jsonify({'recorded_data': recorded_data})
 
+@app.route('/')
+def index():
+    return render_template('dashboard.html')
+
 def capture_decibels():
     # Use sounddevice to capture audio data
-    audio_data = sd.rec(int(44100), channels=1, dtype='int16')
-    sd.wait()
+    audio_data, _ = sd.read(samplerate=44100, channels=1, dtype='int16', duration=1)
     rms = numpy.sqrt(numpy.mean(audio_data**2))
     decibel_data = 20 * numpy.log10(rms)
 

@@ -11,9 +11,14 @@ def calculate_decibels(audio_data):
         # Assuming audio_data represents the intensities of two sounds (S1 and S2)
         S1, S2 = audio_data[:len(audio_data)//2], audio_data[len(audio_data)//2:]
         
-        # Calculate decibels
+        # Calculate decibels, handle division by zero or negative values
         decibels = 10 * np.log10(np.mean(S1) / np.mean(S2))
-        return decibels
+        
+        # Check for NaN or infinite values
+        if np.isnan(decibels) or np.isinf(decibels):
+            raise ValueError("Invalid decibel value")
+
+        return {"decibels": decibels}
     except Exception as e:
         return {"error": str(e)}
 

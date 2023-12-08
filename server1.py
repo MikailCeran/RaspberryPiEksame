@@ -1,7 +1,6 @@
 # server1.py
 from flask import Flask, jsonify, send_file
 from flask_cors import CORS
-from tasks.tasks import calculate_and_send_decibels  # Adjust the import statement
 from apscheduler.schedulers.background import BackgroundScheduler
 import numpy as np
 import scipy.io.wavfile as wav
@@ -18,6 +17,9 @@ decibels_window = []
 scheduler = BackgroundScheduler()
 
 def save_decibels_to_json():
+    # Move the import statement inside the function
+    from tasks.tasks import calculate_and_send_decibels
+
     global decibels_window
 
     # Calculate the average decibels over the past 10 minutes
@@ -61,6 +63,8 @@ def capture_audio():
 
 @app.route('/get_decibels', methods=['GET'])
 def get_decibels():
+    # Move the import statement inside the function
+    from tasks.tasks import calculate_and_send_decibels
     try:
         audio_data = capture_audio()
         decibels = calculate_and_send_decibels(audio_data)

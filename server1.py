@@ -17,7 +17,6 @@ decibels_window = []
 scheduler = BackgroundScheduler()
 
 def save_decibels_to_json():
-    # Move the import statement inside the function
     from tasks.tasks import calculate_and_send_decibels
 
     global decibels_window
@@ -61,9 +60,12 @@ def capture_audio():
     except Exception as e:
         return {"error": str(e)}
 
+@app.route('/')
+def index():
+    return "Hello, this is the index page!"
+
 @app.route('/get_decibels', methods=['GET'])
 def get_decibels():
-    # Move the import statement inside the function
     from tasks.tasks import calculate_and_send_decibels
     try:
         audio_data = capture_audio()

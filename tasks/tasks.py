@@ -1,21 +1,19 @@
-# tasks/tasks.py
-from celery import Celery
-import numpy as np
+import requests
 
-celery = Celery('tasks', broker='pyamqp://guest:guest@localhost//')
+server_url = "http://192.168.50.236:8080"
 
-def calculate_and_send_decibels(audio_data):
+def get_decibels_data():
     try:
-        # Assuming audio_data represents the intensities of two sounds (S1 and S2)
-        S1, S2 = audio_data[:len(audio_data)//2], audio_data[len(audio_data)//2:]
-        
-        # Calculate decibels, handle division by zero or negative values
-        decibels = 10 * np.log10(np.mean(S1) / np.mean(S2))
-        
-        # Check for NaN or infinite values
-        if np.isnan(decibels) or np.isinf(decibels):
-            raise ValueError("Invalid decibel value")
+        response = requests.get(f"{server_url}/get_decibels_data")
+        response.raise_for_status()  # Raise an exception for bad responses
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return None
 
-        return {"decibels": decibels}
-    except Exception as e:
-        return {"error": str(e)}
+if __name__ == "__main__":
+    decibels_data = get_decibels_data()
+
+    if decibels_data:
+        print("Received Decibel Data:")
+        print(decibels_data)

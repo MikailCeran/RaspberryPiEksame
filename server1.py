@@ -13,7 +13,6 @@ CORS(app)
 
 # Global variables for storing decibel readings and timestamps
 decibel_readings = []
-decibels_data = {"average_pr_1min": [], "average_pr_10min": []}
 
 # Lock for thread safety when updating global variables
 lock = threading.Lock()
@@ -59,7 +58,7 @@ def capture_audio():
 
 # Periodic task to calculate average decibels every 1 minute
 def calculate_average_decibels_1min():
-    global decibel_readings, decibels_data
+    global decibel_readings
 
     with lock:
         try:
@@ -77,9 +76,8 @@ def calculate_average_decibels_1min():
             decibel_readings = decibel_readings[-10:]
 
             # Update the JSON file
-            decibels_data["average_pr_1min"].append((average_decibel, timestamp))
             with open('decibels_data.json', 'w') as json_file:
-                json.dump(decibels_data, json_file)
+                json.dump({"average_pr_1min": [(average_decibel, timestamp)]}, json_file)
 
         except Exception as e:
             print(f"Error in calculate_average_decibels_1min: {e}")
@@ -89,20 +87,19 @@ def calculate_average_decibels_1min():
 
 # Periodic task to calculate average decibels every 10 minutes
 def calculate_average_decibels_10min():
-    global decibel_readings, decibels_data
+    global decibel_readings
 
     with lock:
         try:
             # Calculate the average decibel level for the past 10 minutes
             if decibel_readings:
                 average_10min = np.mean([reading[0] for reading in decibel_readings])
-                decibels_data["average_pr_10min"].append((average_10min, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-                # Trim the list to keep only the last 10 minutes of readings
-                decibel_readings = decibel_readings[-10:]
-
                 # Update the JSON file
+                with open('decibels_data.json', 'r') as json_file:
+                    data = json.load(json_file)
+                    data["average_pr_10min"].append((average_10min, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
                 with open('decibels_data.json', 'w') as json_file:
-                    json.dump(decibels_data, json_file)
+                    json.dump(data, json_file)
 
         except Exception as e:
             print(f"Error in calculate_average_decibels_10min: {e}")
@@ -110,10 +107,10 @@ def calculate_average_decibels_10min():
     # Schedule the task to run again in 10 minutes
     threading.Timer(600, calculate_average_decibels_10min).start()
 
+# Run the Flask app
 if __name__ == "__main__":
     # Start the threads for periodic tasks
     threading.Timer(60, calculate_average_decibels_1min).start()
     threading.Timer(600, calculate_average_decibels_10min).start()
 
-    # Run the Flask app
     app.run(host='0.0.0.0', port=8080, threaded=True)

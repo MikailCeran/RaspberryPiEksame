@@ -77,6 +77,7 @@ def calculate_average_decibels_1min():
             decibel_readings = decibel_readings[-10:]
 
             # Update the JSON file
+            decibels_data["average_pr_1min"].append((average_decibel, timestamp))
             with open('decibels_data.json', 'w') as json_file:
                 json.dump(decibels_data, json_file)
 

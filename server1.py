@@ -52,10 +52,12 @@ def capture_audio():
         return audio_data
 
     except Exception as e:
+        print(f"Error in capture_audio: {e}")
         return {"error": str(e)}
     finally:
         # Terminate the PyAudio instance
         p.terminate()
+
 
 # Route to get decibel data directly from the JSON file
 @app.route('/get_decibels_data', methods=['GET'])

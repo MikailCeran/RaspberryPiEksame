@@ -1,9 +1,8 @@
-# server1.py
 from flask import Flask, jsonify, send_file
 from flask_cors import CORS
 import json
 import numpy as np
-import sounddevice as sd  # Use sounddevice for audio capture
+import sounddevice as sd
 from datetime import datetime, timedelta
 import threading
 import time
@@ -18,16 +17,15 @@ decibels_data = {"average_pr_1min": [], "average_pr_10min": []}
 # Lock for thread safety when updating global variables
 lock = threading.Lock()
 
-# Function to capture audio from the microphone using sounddevice
 def capture_audio():
     try:
         # Set the sampling parameters
-        duration = 5  # seconds
+        duration = 1  # seconds
         samplerate = 44100
         channels = 1  # 1 for mono, 2 for stereo
 
-        # Capture audio data
-        audio_data = sd.rec(int(samplerate * duration), samplerate=samplerate, channels=channels, dtype='int16')
+        # Record audio data from the microphone
+        audio_data = sd.rec(int(samplerate * duration), samplerate=samplerate, channels=channels, dtype=np.int16)
         sd.wait()
 
         return audio_data.flatten()
@@ -42,23 +40,6 @@ def get_decibels_data():
     try:
         with lock:
             return jsonify(decibels_data)
-    except Exception as e:
-        return jsonify({"error": str(e)})
-
-# Route for the index page
-@app.route('/')
-def index():
-    return "Hello, this is the index page!"
-
-# Route to get decibels using the previous logic
-@app.route('/get_decibels', methods=['GET'])
-def get_decibels():
-    from tasks.tasks import calculate_and_send_decibels
-    try:
-        with lock:
-            audio_data = capture_audio()
-            decibels = calculate_and_send_decibels(audio_data)
-            return jsonify({"decibels": decibels["decibels"]})
     except Exception as e:
         return jsonify({"error": str(e)})
 

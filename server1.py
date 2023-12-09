@@ -19,7 +19,10 @@ decibels_data = {"average_pr_1min": [], "average_pr_10min": []}
 lock = threading.Lock()
 
 # Function to capture audio from the microphone using PyAudio
+# Function to capture audio from the microphone using PyAudio
 def capture_audio():
+    p = None  # Initialize PyAudio instance outside the try block
+
     try:
         # Initialize PyAudio
         p = pyaudio.PyAudio()
@@ -55,8 +58,9 @@ def capture_audio():
         print(f"Error in capture_audio: {e}")
         return {"error": str(e)}
     finally:
-        # Terminate the PyAudio instance
-        p.terminate()
+        # Terminate the PyAudio instance if it's defined
+        if p:
+            p.terminate()
 
 
 # Route to get decibel data directly from the JSON file

@@ -19,12 +19,9 @@ decibels_data = {"average_pr_1min": [], "average_pr_10min": []}
 lock = threading.Lock()
 
 # Function to capture audio from the microphone using PyAudio
-# Function to capture audio from the microphone using PyAudio
 def capture_audio():
-    p = None  # Initialize PyAudio instance outside the try block
-
     try:
-        # Initialize PyAudio
+        # Initialize PyAudio outside the try block
         p = pyaudio.PyAudio()
 
         # Set the sampling parameters
@@ -32,22 +29,19 @@ def capture_audio():
         samplerate = 44100
         channels = 1  # 1 for mono, 2 for stereo
 
-        # Open a stream for audio input
-        stream = p.open(format=pyaudio.paInt16,
-                        channels=channels,
-                        rate=samplerate,
-                        input=True,
-                        frames_per_buffer=samplerate)
-
-        # Read audio data from the stream
-        frames = []
-        for i in range(int(samplerate / duration)):
-            data = stream.read(int(samplerate * duration / (samplerate / duration)))
-            frames.append(np.frombuffer(data, dtype=np.int16))
-
-        # Close the stream
-        stream.stop_stream()
-        stream.close()
+        # Open a stream for audio input using a context manager
+        with p.open(
+            format=pyaudio.paInt16,
+            channels=channels,
+            rate=samplerate,
+            input=True,
+            frames_per_buffer=samplerate
+        ) as stream:
+            # Read audio data from the stream
+            frames = []
+            for i in range(int(samplerate / duration)):
+                data = stream.read(int(samplerate * duration / (samplerate / duration)))
+                frames.append(np.frombuffer(data, dtype=np.int16))
 
         # Convert the frames to a NumPy array
         audio_data = np.concatenate(frames)
@@ -58,10 +52,9 @@ def capture_audio():
         print(f"Error in capture_audio: {e}")
         return {"error": str(e)}
     finally:
-        # Terminate the PyAudio instance if it's defined
-        if p:
+        # Terminate the PyAudio instance in the finally block
+        if 'p' in locals() and hasattr(p, 'terminate'):
             p.terminate()
-
 
 # Route to get decibel data directly from the JSON file
 @app.route('/get_decibels_data', methods=['GET'])

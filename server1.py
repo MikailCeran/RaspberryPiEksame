@@ -7,6 +7,7 @@ import pyaudio
 from datetime import datetime, timedelta
 import threading
 import time
+import sounddevice as sd
 
 app = Flask(__name__)
 CORS(app)
@@ -21,38 +22,20 @@ lock = threading.Lock()
 # Function to capture audio from the microphone using PyAudio
 def capture_audio():
     try:
-        p = pyaudio.PyAudio()
+        # Set the sampling parameters
+        duration = 5  # seconds
+        samplerate = 44100
+        channels = 1  # 1 for mono, 2 for stereo
 
-        # Get default input device
-        input_device_index = p.get_default_input_device_info()['index']
+        # Capture audio data
+        audio_data = sd.rec(int(samplerate * duration), samplerate=samplerate, channels=channels, dtype='int16')
+        sd.wait()
 
-        stream = p.open(format=pyaudio.paInt16,
-                        channels=1,
-                        rate=44100,
-                        input=True,
-                        input_device_index=input_device_index,
-                        frames_per_buffer=1024)
-
-        print("Recording...")
-
-        frames = []
-        for i in range(0, int(44100 / 1024 * 5)):  # Adjust the number of frames based on your needs
-            data = stream.read(1024)
-            frames.append(data)
-
-        print("Finished recording.")
-
-        stream.stop_stream()
-        stream.close()
-        p.terminate()
-
-        audio_data = np.frombuffer(b''.join(frames), dtype=np.int16)
-        return audio_data
+        return audio_data.flatten()
 
     except Exception as e:
         print(f"Error in capture_audio: {e}")
         return {"error": str(e)}
-
 # Route to get decibel data directly from the JSON file
 @app.route('/get_decibels_data', methods=['GET'])
 def get_decibels_data():
@@ -129,4 +112,4 @@ if __name__ == "__main__":
     threading.Timer(600, calculate_average_decibels_10min).start()
 
     # Run the Flask app
-    app.run(host='0.0.0.0', port=8080, threaded=True)
+    app.run(host='0.0.0.0', port=8080, threaded=True)   

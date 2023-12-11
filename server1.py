@@ -5,9 +5,13 @@ import sounddevice as sd
 from datetime import datetime, timedelta
 import threading
 import queue
+import time  # Add this line to import the time module
 
 app = Flask(__name__)
 CORS(app)
+
+# ... (rest of the code remains unchanged)
+
 
 decibels_data = {"average_pr_1min": [], "average_pr_10min": []}
 lock = threading.Lock()

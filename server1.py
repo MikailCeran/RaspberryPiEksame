@@ -6,12 +6,10 @@ from datetime import datetime, timedelta
 import threading
 import queue
 import time  # Add this line to import the time module
+import pyaudio
 
 app = Flask(__name__)
 CORS(app)
-
-# ... (rest of the code remains unchanged)
-
 
 decibels_data = {"average_pr_1min": [], "average_pr_10min": []}
 lock = threading.Lock()
@@ -19,18 +17,43 @@ audio_queue = queue.Queue()
 
 def capture_audio():
     try:
+        # Initialize PyAudio
+        p = pyaudio.PyAudio()
+
+        # Set the sampling parameters
         duration = 1  # seconds
         samplerate = 44100
-        channels = 1
+        channels = 1  # 1 for mono, 2 for stereo
 
-        audio_data = sd.rec(int(samplerate * duration), samplerate=samplerate, channels=channels, dtype=np.int16)
-        sd.wait()
+        # Open a stream for audio input
+        stream = p.open(format=pyaudio.paInt16,
+                        channels=channels,
+                        rate=samplerate,
+                        input=True,
+                        frames_per_buffer=int(samplerate * duration))
 
-        return audio_data.flatten()
+        # Read audio data from the stream
+        frames = []
+        for i in range(int(samplerate / duration)):
+            data = stream.read(int(samplerate * duration / (samplerate / duration)))
+            frames.append(np.frombuffer(data, dtype=np.int16))
+
+        # Close the stream
+        stream.stop_stream()
+        stream.close()
+
+        # Terminate the PyAudio instance
+        p.terminate()
+
+        # Convert the frames to a NumPy array
+        audio_data = np.concatenate(frames)
+
+        return audio_data
 
     except Exception as e:
         print(f"Error in capture_audio: {e}")
-        return {"error": str(e)}
+        return None
+
 
 @app.route('/get_decibels_data', methods=['GET'])
 def get_decibels_data():

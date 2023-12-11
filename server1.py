@@ -17,42 +17,20 @@ audio_queue = queue.Queue()
 
 def capture_audio():
     try:
-        # Initialize PyAudio
-        p = pyaudio.PyAudio()
-
         # Set the sampling parameters
         duration = 1  # seconds
         samplerate = 44100
         channels = 1  # 1 for mono, 2 for stereo
 
-        # Open a stream for audio input
-        stream = p.open(format=pyaudio.paInt16,
-                        channels=channels,
-                        rate=samplerate,
-                        input=True,
-                        frames_per_buffer=int(samplerate * duration))
+        # Record audio data from the default audio device
+        audio_data = sd.rec(int(samplerate * duration), samplerate=samplerate, channels=channels, dtype=np.int16)
+        sd.wait()
 
-        # Read audio data from the stream
-        frames = []
-        for i in range(int(samplerate / duration)):
-            data = stream.read(int(samplerate * duration / (samplerate / duration)))
-            frames.append(np.frombuffer(data, dtype=np.int16))
-
-        # Close the stream
-        stream.stop_stream()
-        stream.close()
-
-        # Terminate the PyAudio instance
-        p.terminate()
-
-        # Convert the frames to a NumPy array
-        audio_data = np.concatenate(frames)
-
-        return audio_data
+        return audio_data.flatten()
 
     except Exception as e:
         print(f"Error in capture_audio: {e}")
-        return None
+        return {"error": str(e)}
 
 
 @app.route('/get_decibels_data', methods=['GET'])

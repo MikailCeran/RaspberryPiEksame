@@ -1,11 +1,10 @@
 from flask import Flask, jsonify, send_file
 from flask_cors import CORS
 import numpy as np
-import sounddevice as sd
-from datetime import datetime, timedelta
 import threading
 import queue
-import time  # Add this line to import the time module
+import time
+from datetime import datetime, timedelta
 import pyaudio
 
 app = Flask(__name__)
@@ -16,22 +15,8 @@ lock = threading.Lock()
 audio_queue = queue.Queue()
 
 def capture_audio():
-    try:
-        # Set the sampling parameters
-        duration = 1  # seconds
-        samplerate = 44100
-        channels = 1  # 1 for mono, 2 for stereo
-
-        # Record audio data from the default audio device
-        audio_data = sd.rec(int(samplerate * duration), samplerate=samplerate, channels=channels, dtype=np.int16)
-        sd.wait()
-
-        return audio_data.flatten()
-
-    except Exception as e:
-        print(f"Error in capture_audio: {e}")
-        return {"error": str(e)}
-
+    # Simulate capturing audio by generating random decibel values
+    return np.random.uniform(low=30, high=80, size=44100)  # Random values between 30 and 80
 
 @app.route('/get_decibels_data', methods=['GET'])
 def get_decibels_data():

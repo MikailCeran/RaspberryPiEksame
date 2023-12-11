@@ -1,32 +1,133 @@
-import requests
-import time
+from flask import Flask, jsonify, send_file
+from flask_cors import CORS
+import numpy as np
+import pyaudio
+from datetime import datetime, timedelta
+import threading
+import queue  # Import the queue module
 
-server_url = "http://192.168.50.236:8080"
+app = Flask(__name__)
+CORS(app)
 
+# Global variables for storing decibel readings and timestamps
+decibels_data = {"average_pr_1min": [], "average_pr_10min": []}
+
+# Lock for thread safety when updating global variables
+lock = threading.Lock()
+
+# Use a queue to pass audio data between threads
+audio_queue = queue.Queue()
+
+def capture_audio():
+    try:
+        # Initialize PyAudio
+        p = pyaudio.PyAudio()
+
+        # Set the sampling parameters
+        duration = 1  # seconds
+        samplerate = 44100
+        channels = 1  # 1 for mono, 2 for stereo
+
+        # Open a stream for audio input
+        stream = p.open(format=pyaudio.paInt16,
+                        channels=channels,
+                        rate=samplerate,
+                        input=True,
+                        frames_per_buffer=int(samplerate * duration))
+
+        # Read audio data from the stream
+        frames = []
+        for i in range(int(samplerate / duration)):
+            data = stream.read(int(samplerate * duration / (samplerate / duration)))
+            frames.append(np.frombuffer(data, dtype=np.int16))
+
+        # Close the stream
+        stream.stop_stream()
+        stream.close()
+
+        # Terminate the PyAudio instance
+        p.terminate()
+
+        # Convert the frames to a NumPy array
+        audio_data = np.concatenate(frames)
+
+        # Put the audio data into the queue
+        audio_queue.put(audio_data)
+
+    except Exception as e:
+        print(f"Error in capture_audio: {e}")
+
+# Route to get decibel data directly from the JSON file
+@app.route('/get_decibels_data', methods=['GET'])
 def get_decibels_data():
     try:
-        response = requests.get(f"{server_url}/get_decibels_data")
-        response.raise_for_status()  # Raise an exception for bad responses
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Error: {e}")
-        return None
+        with lock:
+            return jsonify(decibels_data)
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+# Route to get captured audio file
+@app.route('/captured_audio', methods=['GET'])
+def get_captured_audio():
+    try:
+        return send_file('captured_audio.wav', as_attachment=True)
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+# Periodic task to calculate average decibels every 1 minute
+def calculate_average_decibels_1min():
+    global decibels_data
+
+    try:
+        # Capture audio data in a separate thread
+        audio_thread = threading.Thread(target=capture_audio)
+        audio_thread.start()
+        audio_thread.join()  # Wait for the audio thread to finish
+
+        # Get the audio data from the queue
+        audio_data = audio_queue.get()
+
+        # Calculate the average decibel level for the past 1 minute
+        average_decibel = np.mean(np.abs(audio_data))
+
+        # Store the average and timestamp
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        decibels_data["average_pr_1min"] = [(average_decibel, timestamp)]
+
+        # Print for debugging
+        print(f"1-minute average decibel: {average_decibel}")
+
+    except Exception as e:
+        print(f"Error in calculate_average_decibels_1min: {e}")
+
+    # Schedule the task to run again in 1 minute
+    threading.Timer(60, calculate_average_decibels_1min).start()
+
+# Periodic task to calculate average decibels every 10 minutes
+def calculate_average_decibels_10min():
+    global decibels_data
+
+    try:
+        # Calculate the average decibel level for the past 10 minutes
+        if decibels_data["average_pr_1min"]:
+            average_10min = np.mean([reading[0] for reading in decibels_data["average_pr_1min"]])
+            decibels_data["average_pr_10min"].append((average_10min, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            # Trim the list to keep only the last 10 minutes of readings
+            decibels_data["average_pr_1min"] = decibels_data["average_pr_1min"][-10:]
+
+            # Print for debugging
+            print(f"10-minute average decibel: {average_10min}")
+
+    except Exception as e:
+        print(f"Error in calculate_average_decibels_10min: {e}")
+
+    # Schedule the task to run again in 10 minutes
+    threading.Timer(600, calculate_average_decibels_10min).start()
 
 if __name__ == "__main__":
-    while True:
-        # Fetch the average decibel levels for the last 10 minutes
-        decibels_data = get_decibels_data()
+    # Start the threads for periodic tasks
+    threading.Timer(60, calculate_average_decibels_1min).start()
+    threading.Timer(600, calculate_average_decibels_10min).start()
 
-        if decibels_data:
-            # Display the average decibel levels for the last 10 minutes
-            print("Average Decibel Readings for the Last 10 Minutes:")
-            for average, timestamp in decibels_data["average_pr_10min"]:
-                print(f"{timestamp}: {average} dB")
-
-            # Display the current average decibel level
-            current_average = decibels_data["average_pr_1min"][-1][0]
-            current_timestamp = decibels_data["average_pr_1min"][-1][1]
-            print(f"\nCurrent Average Decibel Reading ({current_timestamp}): {current_average} dB")
-
-        # Wait for 1 minute before fetching data again
-        time.sleep(60)
+    # Run the Flask app
+    app.run(host='0.0.0.0', port=8080, threaded=True)

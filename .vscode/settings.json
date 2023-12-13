@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "undefined/subscriptions/011529e2-6348-4312-b642-c84328deddd8/resourceGroups/NoiseMeter/providers/Microsoft.Web/sites/NoiseMeterApi",
+    "appService.deploySubpath": "."
+}

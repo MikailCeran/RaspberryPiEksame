@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, send_file
+from flask import Flask, jsonify, send_file, request
 from flask_cors import CORS
 import numpy as np
 import threading
@@ -26,6 +26,17 @@ def get_decibels_data():
     except Exception as e:
         return jsonify({"error": str(e)})
 
+@app.route('/upload_audio', methods=['POST'])
+def upload_audio():
+    try:
+        data = request.json
+        audio_data = np.array(data["audio_data"])
+        # Process the audio data if needed
+        audio_queue.put(audio_data)
+        return jsonify({"message": "Audio data received successfully"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/captured_audio', methods=['GET'])
 def get_captured_audio():
     try:
@@ -38,7 +49,7 @@ def calculate_average_decibels_1min():
 
     while True:
         try:
-            audio_data = capture_audio()
+            audio_data = audio_queue.get()
             average_decibel = np.mean(np.abs(audio_data))
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 

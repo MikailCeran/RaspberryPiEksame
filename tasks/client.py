@@ -3,7 +3,8 @@ import time
 import numpy as np  # Ensure numpy is imported for processing audio data
 
 # Update the server_url to the local Flask server
-server_url = "http://127.0.0.1:8080"
+server_url = "http://192.168.50.236:8080"
+
 
 def capture_audio():
     # Simulate capturing audio by generating random decibel values

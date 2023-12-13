@@ -3,11 +3,6 @@ import time
 
 server_url = "http://192.168.50.236:8080"
 
-import requests
-import time
-
-server_url = "http://192.168.50.236:8080"
-
 def get_decibels_data():
     try:
         response = requests.get(f"{server_url}/get_decibels_data")

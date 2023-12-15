@@ -1,4 +1,11 @@
 {
     "appService.defaultWebAppToDeploy": "undefined/subscriptions/011529e2-6348-4312-b642-c84328deddd8/resourceGroups/NoiseMeter/providers/Microsoft.Web/sites/NoiseMeterApi",
-    "appService.deploySubpath": "."
+    "appService.deploySubpath": ".",
+    "azureFunctions.deploySubpath": ".",
+    "azureFunctions.scmDoBuildDuringDeployment": true,
+    "azureFunctions.pythonVenv": "venv",
+    "azureFunctions.projectLanguage": "Python",
+    "azureFunctions.projectRuntime": "~4",
+    "debug.internalConsoleOptions": "neverOpen",
+    "azureFunctions.projectLanguageModel": 2
 }

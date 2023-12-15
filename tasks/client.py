@@ -3,7 +3,7 @@ import time
 import numpy as np  # Ensure numpy is imported for processing audio data
 
 # Update the server_url to the local Flask server on Raspberry Pi
-local_server_url = "http://192.168.156.236:8080"
+local_server_url = "http://192.168.75.236:8080"
 
 # Update the server_url_azure to the Azure API endpoint
 azure_server_url = "https://noisemeterapi.azurewebsites.net"

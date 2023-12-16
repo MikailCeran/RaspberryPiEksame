@@ -1,80 +1,61 @@
 import requests
+import numpy as np
+import json
 import time
-import numpy as np  # Ensure numpy is imported for processing audio data
+import socketio
 
-# Update the server_url to the local Flask server on Raspberry Pi
-local_server_url = "http://192.168.75.236:8080/api/noise"
+# Replace this URL with the actual Azure API endpoint
+azure_api_host = "apirestnoise.azurewebsites.net"
+azure_api_url = f"https://{azure_api_host}"
 
-# Update the server_url_azure to the Azure API endpoint
-azure_server_url = "https://restnoise.azurewebsites.net/api/noise"
+sio = socketio.Client()
+
+@sio.event
+def connect():
+    print("Connected to server")
+
+@sio.event
+def disconnect():
+    print("Disconnected from server")
 
 def capture_audio():
     # Simulate capturing audio by generating random decibel values
-    return np.random.uniform(low=30, high=80, size=44100)  # Random values between 30 and 80
+    return np.random.uniform(low=30, high=80, size=44100).tolist()  # Convert to list for JSON serialization
 
-def send_audio_data(audio_data, server_url):
+def upload_audio(audio_data):
     try:
-        # Convert NumPy array to Python list
-        audio_data_list = audio_data.tolist()
+        data = {"audio_data": audio_data}
+        sio.emit("upload_audio", data)
+        print("Audio data uploaded successfully")
+    except Exception as e:
+        print(f"Error uploading audio data: {e}")
 
-        response = requests.put(f"{server_url}/updateall", json={"audio_data": audio_data_list})
-        response.raise_for_status()  # Raise an exception for bad responses
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Error: {e}")
-        return None
-
-
-def get_decibels_data(server_url):
+def get_decibels_data():
     try:
-        audio_data = capture_audio()
+        response = requests.get(f"{azure_api_url}/get_decibels_data")
 
-        # Optionally, process audio_data if needed
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"Error retrieving decibel data. Status code: {response.status_code}, Error: {response.text}")
+            return None
 
-        # Send audio data to the server (local or Azure) based on the server_url
-        send_audio_data(audio_data, server_url)
-
-        # Fetch other data from the server (local or Azure) based on the server_url
-        response = requests.get(f"{server_url}/get_decibels_data")
-        response.raise_for_status()  # Raise an exception for bad responses
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Error: {e}")
+    except Exception as e:
+        print(f"Error retrieving decibel data: {e}")
         return None
-
 
 if __name__ == "__main__":
+    sio.connect(azure_api_url)
+
     while True:
-        # Fetch the average decibel levels for the last 10 minutes from the local server
-        decibels_data_local = get_decibels_data(local_server_url)
+        # Simulate capturing audio and uploading to the server
+        audio_data = capture_audio()
+        upload_audio(audio_data)
 
-        if decibels_data_local and decibels_data_local["average_pr_1min"]:
-            # Display the average decibel levels for the last 10 minutes
-            print("Average Decibel Readings for the Last 10 Minutes (Local Server):")
-            for average, timestamp in decibels_data_local["average_pr_10min"]:
-                print(f"{timestamp}: {average} dB")
+        # Retrieve and print decibel data from the server
+        decibel_data = get_decibels_data()
+        if decibel_data:
+            print("Decibel Data:", decibel_data)
 
-            # Display the current average decibel level
-            current_average = decibels_data_local["average_pr_1min"][-1][0]
-            current_timestamp = decibels_data_local["average_pr_1min"][-1][1]
-            print(f"\nCurrent Average Decibel Reading ({current_timestamp}): {current_average} dB")
-
-        # Send audio data to the Azure API
-        send_audio_data(capture_audio(), azure_server_url)
-
-        # Fetch the average decibel levels for the last 10 minutes from the Azure API
-        decibels_data_azure = get_decibels_data(azure_server_url)
-
-        if decibels_data_azure and decibels_data_azure["average_pr_1min"]:
-            # Display the average decibel levels for the last 10 minutes
-            print("\nAverage Decibel Readings for the Last 10 Minutes (Azure API):")
-            for average, timestamp in decibels_data_azure["average_pr_10min"]:
-                print(f"{timestamp}: {average} dB")
-
-            # Display the current average decibel level
-            current_average_azure = decibels_data_azure["average_pr_1min"][-1][0]
-            current_timestamp_azure = decibels_data_azure["average_pr_1min"][-1][1]
-            print(f"\nCurrent Average Decibel Reading ({current_timestamp_azure}): {current_average_azure} dB")
-
-        # Wait for 1 minute before fetching data again
+        # Sleep for a minute before capturing/uploading again
         time.sleep(60)

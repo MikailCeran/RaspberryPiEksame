@@ -4,8 +4,7 @@ import numpy as np
 import threading
 import queue
 import time
-from datetime import datetime, timedelta
-import pyaudio
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -18,7 +17,7 @@ def capture_audio():
     # Simulate capturing audio by generating random decibel values
     return np.random.uniform(low=30, high=80, size=44100)  # Random values between 30 and 80
 
-@app.route('/get_decibels_data', methods=['GET'])
+@app.route('/', methods=['GET'])
 def get_decibels_data():
     try:
         with lock:
@@ -26,7 +25,7 @@ def get_decibels_data():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-@app.route('/upload_audio', methods=['POST'])
+@app.route('/', methods=['POST'])
 def upload_audio():
     try:
         data = request.json
@@ -37,7 +36,7 @@ def upload_audio():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/captured_audio', methods=['GET'])
+@app.route('/', methods=['GET'])
 def get_captured_audio():
     try:
         return send_file('captured_audio.wav', as_attachment=True)

@@ -3,10 +3,10 @@ import time
 import numpy as np  # Ensure numpy is imported for processing audio data
 
 # Update the server_url to the local Flask server on Raspberry Pi
-local_server_url = "http://192.168.75.236:8080"
+local_server_url = "http://192.168.75.236:8080/api/noise"
 
 # Update the server_url_azure to the Azure API endpoint
-azure_server_url = "https://noisemeterapi.azurewebsites.net"
+azure_server_url = "https://restnoise.azurewebsites.net/api/noise"
 
 def capture_audio():
     # Simulate capturing audio by generating random decibel values
@@ -14,12 +14,16 @@ def capture_audio():
 
 def send_audio_data(audio_data, server_url):
     try:
-        response = requests.post(f"{server_url}/upload_audio", json={"audio_data": audio_data.tolist()})
+        # Convert NumPy array to Python list
+        audio_data_list = audio_data.tolist()
+
+        response = requests.put(f"{server_url}/updateall", json={"audio_data": audio_data_list})
         response.raise_for_status()  # Raise an exception for bad responses
         return response.json()
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
         return None
+
 
 def get_decibels_data(server_url):
     try:
@@ -37,6 +41,7 @@ def get_decibels_data(server_url):
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
         return None
+
 
 if __name__ == "__main__":
     while True:

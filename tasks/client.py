@@ -4,9 +4,14 @@ import json
 import time
 import socketio
 
+<<<<<<< HEAD
 # Replace this URL with the actual Azure API endpoint
 azure_api_host = "apirestnoise.azurewebsites.net"
 azure_api_url = f"https://{azure_api_host}"
+=======
+# Update the server_url to the local Flask server on Raspberry Pi
+local_server_url = "http://192.168.156.236:8080"
+>>>>>>> parent of 2e227b9 (s)
 
 sio = socketio.Client()
 

@@ -1,84 +1,24 @@
 import requests
 import numpy as np
-import json
-import time
-import socketio
 
-<<<<<<< HEAD
-# Replace this URL with the actual Azure API endpoint
-azure_api_host = "apirestnoise.azurewebsites.net"
-azure_api_url = f"https://{azure_api_host}"
-=======
-# Update the server_url to the local Flask server on Raspberry Pi
-<<<<<<< HEAD
-local_server_url = "http://192.168.156.236:8080"
->>>>>>> parent of 2e227b9 (s)
+# Replace this URL with your Azure web app URL
+api_url = "https://restnoise.azurewebsites.net/api/noise"
 
-sio = socketio.Client()
-
-@sio.event
-def connect():
-    print("Connected to server")
-
-@sio.event
-def disconnect():
-    print("Disconnected from server")
-=======
-local_server_url = "http://192.168.75.236:8080"
-
-# Update the server_url_azure to the Azure API endpoint
-azure_server_url = "https://noisemeterapi.azurewebsites.net"
->>>>>>> parent of c012c27 (ss)
-
-def capture_audio():
+def generate_random_audio_data():
     # Simulate capturing audio by generating random decibel values
-    return np.random.uniform(low=30, high=80, size=44100).tolist()  # Convert to list for JSON serialization
+    return np.random.uniform(low=30, high=80, size=44100).tolist()
 
-def upload_audio(audio_data):
+def send_audio_data_to_server(audio_data):
     try:
-<<<<<<< HEAD
-        data = {"audio_data": audio_data}
-        sio.emit("upload_audio", data)
-        print("Audio data uploaded successfully")
-    except Exception as e:
-        print(f"Error uploading audio data: {e}")
-
-def get_decibels_data():
-=======
-        response = requests.post(f"{server_url}/upload_audio", json={"audio_data": audio_data.tolist()})
-        response.raise_for_status()  # Raise an exception for bad responses
-        return response.json()
+        response = requests.post(api_url, json={"audio_data": audio_data})
+        response.raise_for_status()
+        print("Audio data sent successfully.")
     except requests.exceptions.RequestException as e:
-        print(f"Error: {e}")
-        return None
-
-def get_decibels_data(server_url):
->>>>>>> parent of c012c27 (ss)
-    try:
-        response = requests.get(f"{azure_api_url}/get_decibels_data")
-
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print(f"Error retrieving decibel data. Status code: {response.status_code}, Error: {response.text}")
-            return None
-
-    except Exception as e:
-        print(f"Error retrieving decibel data: {e}")
-        return None
+        print(f"Error sending audio data: {e}")
 
 if __name__ == "__main__":
-    sio.connect(azure_api_url)
+    # Generate random audio data
+    audio_data = generate_random_audio_data()
 
-    while True:
-        # Simulate capturing audio and uploading to the server
-        audio_data = capture_audio()
-        upload_audio(audio_data)
-
-        # Retrieve and print decibel data from the server
-        decibel_data = get_decibels_data()
-        if decibel_data:
-            print("Decibel Data:", decibel_data)
-
-        # Sleep for a minute before capturing/uploading again
-        time.sleep(60)
+    # Send audio data to the Flask API
+    send_audio_data_to_server(audio_data)

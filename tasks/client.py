@@ -10,6 +10,7 @@ azure_api_host = "apirestnoise.azurewebsites.net"
 azure_api_url = f"https://{azure_api_host}"
 =======
 # Update the server_url to the local Flask server on Raspberry Pi
+<<<<<<< HEAD
 local_server_url = "http://192.168.156.236:8080"
 >>>>>>> parent of 2e227b9 (s)
 
@@ -22,6 +23,12 @@ def connect():
 @sio.event
 def disconnect():
     print("Disconnected from server")
+=======
+local_server_url = "http://192.168.75.236:8080"
+
+# Update the server_url_azure to the Azure API endpoint
+azure_server_url = "https://noisemeterapi.azurewebsites.net"
+>>>>>>> parent of c012c27 (ss)
 
 def capture_audio():
     # Simulate capturing audio by generating random decibel values
@@ -29,6 +36,7 @@ def capture_audio():
 
 def upload_audio(audio_data):
     try:
+<<<<<<< HEAD
         data = {"audio_data": audio_data}
         sio.emit("upload_audio", data)
         print("Audio data uploaded successfully")
@@ -36,6 +44,16 @@ def upload_audio(audio_data):
         print(f"Error uploading audio data: {e}")
 
 def get_decibels_data():
+=======
+        response = requests.post(f"{server_url}/upload_audio", json={"audio_data": audio_data.tolist()})
+        response.raise_for_status()  # Raise an exception for bad responses
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return None
+
+def get_decibels_data(server_url):
+>>>>>>> parent of c012c27 (ss)
     try:
         response = requests.get(f"{azure_api_url}/get_decibels_data")
 

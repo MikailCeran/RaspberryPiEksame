@@ -66,6 +66,7 @@ def calculate_average_decibels_1min():
 
             with lock:
                 decibels_data["average_pr_1min"] = [(average_decibel, timestamp)]
+                send_audio_data_to_api("Sensor 1min", average_decibel, timestamp)
 
             print(f"1-minute average decibel: {average_decibel}")
 
@@ -91,6 +92,7 @@ def calculate_average_decibels_10min():
                     decibels_data["average_pr_1min"] = decibels_data["average_pr_1min"][
                         -10:
                     ]
+                    send_audio_data_to_api("Sensor 10", average_10min, timestamp)
 
                 print(f"10-minute average decibel: {average_10min}")
 
@@ -100,17 +102,11 @@ def calculate_average_decibels_10min():
         time.sleep(600)
 
 
-def send_audio_data_to_api():
-    # Simulate capturing audio by generating random decibel values
-    audio_data = np.random.uniform(
-        low=30, high=80, size=44100
-    ).tolist()  # Convert numpy array to list
-
-    # Construct the data payload
-    payload = {"audio_data": audio_data}
+def send_audio_data_to_api(deviceId, dBVolume, timestamp):
+    data = {"DeviceId": deviceId, "dBvolume": dBVolume, "Timestamp": timestamp}
 
     # Send POST request to the API
-    response = requests.post(api_url, json=payload)
+    response = requests.post(api_url, json=data)
 
     # Check the response
     if response.status_code == 200:
@@ -124,6 +120,5 @@ def send_audio_data_to_api():
 if __name__ == "__main__":
     threading.Thread(target=calculate_average_decibels_1min).start()
     threading.Thread(target=calculate_average_decibels_10min).start()
-    threading.Thread(target=send_audio_data_to_api).start()
 
     app.run(host="0.0.0.0", port=8080, threaded=True)

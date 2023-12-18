@@ -113,6 +113,7 @@ def send_audio_data_to_api():
         print("Send audio data to api method executing")
         timestamp = datetime.now().isoformat()  # ISO 8601 format
         random_number = generate_random_number()
+        data = request.json
         audio_data = audio_queue.get()
         average_decibel = np.mean(np.abs(audio_data))
         data = {

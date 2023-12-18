@@ -120,5 +120,6 @@ def send_audio_data_to_api(deviceId, dBVolume, timestamp):
 if __name__ == "__main__":
     threading.Thread(target=calculate_average_decibels_1min).start()
     threading.Thread(target=calculate_average_decibels_10min).start()
+    threading.Thread(target=send_audio_data_to_api).start()
 
     app.run(host="0.0.0.0", port=8080, threaded=True)

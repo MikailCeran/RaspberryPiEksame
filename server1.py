@@ -18,6 +18,7 @@ CORS(app)
 decibels_data = {"average_pr_1min": [], "average_pr_10min": []}
 lock = threading.Lock()
 audio_queue = queue.Queue()
+averageDecibel = 0
 
 
 def capture_audio():
@@ -112,9 +113,11 @@ def send_audio_data_to_api():
         print("Send audio data to api method executing")
         timestamp = datetime.now().isoformat()  # ISO 8601 format
         random_number = generate_random_number()
+        audio_data = audio_queue.get()
+        average_decibel = np.mean(np.abs(audio_data))
         data = {
             "DeviceId": "Sensor 1",
-            "dBvolume": random_number,
+            "dBvolume": average_decibel,
             "Timestamp": timestamp,
         }
 

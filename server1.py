@@ -6,6 +6,10 @@ import queue
 import time
 from datetime import datetime, timedelta
 import pyaudio
+import json
+import requests
+
+api_url = "https://noisemeterrestapi.azurewebsites.net/api/NoiseMeters"
 
 app = Flask(__name__)
 CORS(app)
@@ -14,11 +18,15 @@ decibels_data = {"average_pr_1min": [], "average_pr_10min": []}
 lock = threading.Lock()
 audio_queue = queue.Queue()
 
+
 def capture_audio():
     # Simulate capturing audio by generating random decibel values
-    return np.random.uniform(low=30, high=80, size=44100)  # Random values between 30 and 80
+    return np.random.uniform(
+        low=30, high=80, size=44100
+    )  # Random values between 30 and 80
 
-@app.route('/get_decibels_data', methods=['GET'])
+
+@app.route("/get_decibels_data", methods=["GET"])
 def get_decibels_data():
     try:
         with lock:
@@ -26,7 +34,8 @@ def get_decibels_data():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-@app.route('/upload_audio', methods=['POST'])
+
+@app.route("/upload_audio", methods=["POST"])
 def upload_audio():
     try:
         data = request.json
@@ -37,12 +46,14 @@ def upload_audio():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/captured_audio', methods=['GET'])
+
+@app.route("/captured_audio", methods=["GET"])
 def get_captured_audio():
     try:
-        return send_file('captured_audio.wav', as_attachment=True)
+        return send_file("captured_audio.wav", as_attachment=True)
     except Exception as e:
         return jsonify({"error": str(e)})
+
 
 def calculate_average_decibels_1min():
     global decibels_data
@@ -51,7 +62,7 @@ def calculate_average_decibels_1min():
         try:
             audio_data = audio_queue.get()
             average_decibel = np.mean(np.abs(audio_data))
-            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             with lock:
                 decibels_data["average_pr_1min"] = [(average_decibel, timestamp)]
@@ -63,18 +74,23 @@ def calculate_average_decibels_1min():
 
         time.sleep(60)
 
+
 def calculate_average_decibels_10min():
     global decibels_data
 
     while True:
         try:
             if decibels_data["average_pr_1min"]:
-                average_10min = np.mean([reading[0] for reading in decibels_data["average_pr_1min"]])
-                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                average_10min = np.mean(
+                    [reading[0] for reading in decibels_data["average_pr_1min"]]
+                )
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
                 with lock:
                     decibels_data["average_pr_10min"].append((average_10min, timestamp))
-                    decibels_data["average_pr_1min"] = decibels_data["average_pr_1min"][-10:]
+                    decibels_data["average_pr_1min"] = decibels_data["average_pr_1min"][
+                        -10:
+                    ]
 
                 print(f"10-minute average decibel: {average_10min}")
 
@@ -83,8 +99,31 @@ def calculate_average_decibels_10min():
 
         time.sleep(600)
 
+
+def send_audio_data_to_api():
+    # Simulate capturing audio by generating random decibel values
+    audio_data = np.random.uniform(
+        low=30, high=80, size=44100
+    ).tolist()  # Convert numpy array to list
+
+    # Construct the data payload
+    payload = {"audio_data": audio_data}
+
+    # Send POST request to the API
+    response = requests.post(api_url, json=payload)
+
+    # Check the response
+    if response.status_code == 200:
+        print("Audio data sent successfully:", response.json())
+    else:
+        print(
+            f"Failed to send data. Status code: {response.status_code}, Response: {response.text}"
+        )
+
+
 if __name__ == "__main__":
     threading.Thread(target=calculate_average_decibels_1min).start()
     threading.Thread(target=calculate_average_decibels_10min).start()
+    threading.Thread(target=send_audio_data_to_api).start()
 
-    app.run(host='0.0.0.0', port=8080, threaded=True)
+    app.run(host="0.0.0.0", port=8080, threaded=True)

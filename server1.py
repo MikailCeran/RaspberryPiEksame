@@ -73,7 +73,7 @@ def calculate_average_decibels_1min():
         except Exception as e:
             print(f"Error in calculate_average_decibels_1min: {e}")
 
-        time.sleep(60)
+        time.sleep(30)
 
 
 def calculate_average_decibels_10min():

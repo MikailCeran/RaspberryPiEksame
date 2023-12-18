@@ -107,11 +107,9 @@ def send_audio_data_to_api():
     timestamp = datetime.now().isoformat()  # ISO 8601 format
 
     data = {
-        "value": {  # Adjust according to the API's expected structure
-            "DeviceId": "Sensor 1",
-            "dBvolume": 10,
-            "Timestamp": timestamp,
-        }
+        "DeviceId": "Sensor 1",
+        "dBvolume": 10,
+        "Timestamp": timestamp,
     }
 
     try:

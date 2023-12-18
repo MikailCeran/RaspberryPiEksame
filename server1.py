@@ -9,7 +9,7 @@ import pyaudio
 import json
 import requests
 
-api_url = "https://localhost:44334/api/NoiseMeters"
+api_url = "https://noisemeterrestapi.azurewebsites.net/api/NoiseMeters"
 
 app = Flask(__name__)
 CORS(app)

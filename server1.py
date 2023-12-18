@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import pyaudio
 import json
 import requests
+import random
 
 api_url = "https://noisemeterrestapi.azurewebsites.net/api/NoiseMeters"
 
@@ -102,26 +103,33 @@ def calculate_average_decibels_10min():
         time.sleep(600)
 
 
+def generate_random_number():
+    return random.randint(0, 100)
+
+
 def send_audio_data_to_api():
-    print("Send audio data to api method executing")
-    timestamp = datetime.now().isoformat()  # ISO 8601 format
+    while True:
+        print("Send audio data to api method executing")
+        timestamp = datetime.now().isoformat()  # ISO 8601 format
+        random_number = generate_random_number()
+        data = {
+            "DeviceId": "Sensor 1",
+            "dBvolume": random_number,
+            "Timestamp": timestamp,
+        }
 
-    data = {
-        "DeviceId": "Sensor 1",
-        "dBvolume": 10,
-        "Timestamp": timestamp,
-    }
+        try:
+            response = requests.post(api_url, json=data)
+            if response.status_code == 200:
+                print("Audio data sent successfully:", response.json())
+            else:
+                print(
+                    f"Failed to send data. Status code: {response.status_code}, Response: {response.text}"
+                )
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e}")
 
-    try:
-        response = requests.post(api_url, json=data)
-        if response.status_code == 200:
-            print("Audio data sent successfully:", response.json())
-        else:
-            print(
-                f"Failed to send data. Status code: {response.status_code}, Response: {response.text}"
-            )
-    except requests.exceptions.RequestException as e:
-        print(f"Request failed: {e}")
+        time.sleep(60)
 
 
 if __name__ == "__main__":

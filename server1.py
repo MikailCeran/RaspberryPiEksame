@@ -103,19 +103,27 @@ def calculate_average_decibels_10min():
 
 
 def send_audio_data_to_api():
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    data = {"DeviceId": "Sensor 1", "dBvolume": 10, "Timestamp": timestamp}
+    print("Send audio data to api method executing")
+    timestamp = datetime.now().isoformat()  # ISO 8601 format
 
-    # Send POST request to the API
-    response = requests.post(api_url, json=data)
+    data = {
+        "value": {  # Adjust according to the API's expected structure
+            "DeviceId": "Sensor 1",
+            "dBvolume": 10,
+            "Timestamp": timestamp,
+        }
+    }
 
-    # Check the response
-    if response.status_code == 200:
-        print("Audio data sent successfully:", response.json())
-    else:
-        print(
-            f"Failed to send data. Status code: {response.status_code}, Response: {response.text}"
-        )
+    try:
+        response = requests.post(api_url, json=data)
+        if response.status_code == 200:
+            print("Audio data sent successfully:", response.json())
+        else:
+            print(
+                f"Failed to send data. Status code: {response.status_code}, Response: {response.text}"
+            )
+    except requests.exceptions.RequestException as e:
+        print(f"Request failed: {e}")
 
 
 if __name__ == "__main__":

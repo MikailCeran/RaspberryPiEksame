@@ -66,7 +66,7 @@ def calculate_average_decibels_1min():
 
             with lock:
                 decibels_data["average_pr_1min"] = [(average_decibel, timestamp)]
-                send_audio_data_to_api("Sensor 1min", average_decibel, timestamp)
+                send_audio_data_to_api()
 
             print(f"1-minute average decibel: {average_decibel}")
 
@@ -92,7 +92,7 @@ def calculate_average_decibels_10min():
                     decibels_data["average_pr_1min"] = decibels_data["average_pr_1min"][
                         -10:
                     ]
-                    send_audio_data_to_api("Sensor 10", average_10min, timestamp)
+                    send_audio_data_to_api()
 
                 print(f"10-minute average decibel: {average_10min}")
 
@@ -102,8 +102,9 @@ def calculate_average_decibels_10min():
         time.sleep(600)
 
 
-def send_audio_data_to_api(deviceId, dBVolume, timestamp):
-    data = {"DeviceId": deviceId, "dBvolume": dBVolume, "Timestamp": timestamp}
+def send_audio_data_to_api():
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    data = {"DeviceId": "Sensor 1", "dBvolume": 10, "Timestamp": timestamp}
 
     # Send POST request to the API
     response = requests.post(api_url, json=data)

@@ -132,7 +132,7 @@ def send_audio_data_to_api():
         except requests.exceptions.RequestException as e:
             print(f"Request failed: {e}")
 
-        time.sleep(60)
+        time.sleep(10)
 
 
 if __name__ == "__main__":
